@@ -1,16 +1,34 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+from google.cloud import pubsub_v1
+from bigquerychecker.check import Launcher
+import json
+from config.settings import settings
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+def main(request):
+    topic_id = settings.TOPIC_ID
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path(settings.PROJECT_ID, topic_id)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    launcher = Launcher()
+    missing_dates = launcher.get_missing_dates_from_bigquery()
+
+    print("Missing dates:", missing_dates)
+
+    futures = []
+
+    for date in missing_dates:
+        message = {
+            "start_date": date,
+            "end_date": date
+        }
+
+        print("Publishing:", message)
+
+        message_bytes = json.dumps(message).encode("utf-8")
+        future = publisher.publish(topic_path, message_bytes)
+        futures.append(future)
+
+    for future in futures:
+        print(future.result())
+
+    return {"success"}, 200
