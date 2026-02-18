@@ -26,6 +26,5 @@ class Launcher:
         expected_dates = set(get_current_week_dates())
 
         missing_dates = sorted(expected_dates - bq_dates)
-        print(missing_dates)
         return missing_dates
 

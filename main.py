@@ -2,6 +2,7 @@ from google.cloud import pubsub_v1
 from bigquerychecker.check import Launcher
 import json
 from config.settings import settings
+from config.logger import logger
 
 
 def main(request):
@@ -12,7 +13,7 @@ def main(request):
     launcher = Launcher()
     missing_dates = launcher.get_missing_dates_from_bigquery()
 
-    print("Missing dates:", missing_dates)
+    logger.info("Missing dates", missing_dates)
 
     futures = []
 
@@ -22,13 +23,13 @@ def main(request):
             "end_date": date
         }
 
-        print("Publishing:", message)
+        logger.info("Publishing:", message)
 
         message_bytes = json.dumps(message).encode("utf-8")
         future = publisher.publish(topic_path, message_bytes)
         futures.append(future)
 
     for future in futures:
-        print(future.result())
+        logger.info(future.result())
 
     return {"success"}, 200
